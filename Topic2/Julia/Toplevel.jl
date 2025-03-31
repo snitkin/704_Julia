@@ -19,7 +19,7 @@ colplot_blue = palette(:Blues_3);
 
 
 function set_parameters(;
-        gamma = 0.75,
+        gamma = 0.5,
         alph = 0.75,
         s = 0.02,
         beta = (0.96).^(1/12),
