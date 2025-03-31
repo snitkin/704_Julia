@@ -13,6 +13,11 @@ using LaTeXStrings
 using Plots.PlotMeasures
 using Roots
 
+include("./functions_sub.jl")
+include("./Sequence_Space_Solver.jl")
+include("./DMP_Model.jl")
+include("./compute_steady_state.jl")
+
 colplot = palette(:Oranges_4);
 colplot_green = palette(:Greens_4);
 colplot_blue = palette(:Blues_3);
@@ -20,25 +25,26 @@ colplot_blue = palette(:Blues_3);
 
 function set_parameters(;
         gamma = 0.5,
-        alph = 0.75,
         s = 0.02,
         beta = (0.96).^(1/12),
-        b = 0.4
+        b = 0.4,
+        iota = 1.6
     )
 
     P = Dict{String,Any}()
     m = 1
     P["m"] = m;
-    P["alph"] = alph;
+    P["iota"] = iota;
+
+    uss = 0.05;
+    thetass = ffun_inverse(P, (s.*(1-uss))/uss);
     
-    uss = 0.05
+ 
     zss =1;
-    lambdaU = s.*(1-uss)./uss
-    thetass = (lambdaU/m).^(1/(1-alph))
     wssfun(c) = (1-gamma)*b + gamma*(zss + thetass*c)
 
     solvefun(c) = c - beta./(1-beta.*(1-s)).*qfun(P,thetass).*(zss - wssfun(c));
-    c = fzero(solvefun,0,10)
+    c = fzero(solvefun, 1.0)  # Provide an initial guess instead of an interval
     P["c"] = c;
     P["xi"] = 0.5;
     P["gamma"] = gamma;
@@ -58,18 +64,16 @@ end
 
 P = set_parameters()
 
-include("./functions_sub.jl")
-include("./Sequence_Space_Solver.jl")
-include("./DMP_Model.jl")
-include("./compute_steady_state.jl")
 
-T = 500;
+
+
+
+T = 30;
 
 Shock_Var_in = "z shock"
-Shock_Path = exp.(zeros(T))
-Shock_Path[1] =  exp.(0.01)
+Shock_Path = ones(T)
 for t = 2:T
-    Shock_Path[t] = exp(P["rho"]*log(Shock_Path[t-1]))
+    Shock_Path[t] = Shock_Path[t] + 0.1
 end
 ss0 = 0.1*ones(length(references))
 ss0 = steady_state(ss0,references,P,varargin_eq,"z shock",ones(T))
@@ -81,28 +85,7 @@ d = construct_IRF(xfull,n)
 
 plot(1:T,d["ud"])
 
-
-
-
-data, header = readdlm("./data/labor_productivity_bk.csv",',', header= true);
-df =  DataFrame(data, vec(header));
-
-lp_shock = data[:,3]
-Tdata = length(lp_shock)
-upath = zeros(Tdata)
-for t = eachindex(lp_shock)
-    endt = t:min(t+T-1,Tdata)
-    IRF = d["ud"][1:length(endt)] .- P["uss"]
-    upath[endt] +=  IRF./0.01.*lp_shock[t]
-end
-
-upath = upath .+ P["uss"]
-plot(1:Tdata,upath)
-open("./data/u_sim.csv", "w") do io
-    writedlm(io, upath)
-end
-
-
+"""
 
 Shock_Var_in = "s"
 Shock_Path = P["s"]*exp.(zeros(T))
@@ -211,3 +194,4 @@ plot(plt_s,plt_u,plt_v,plt_theta,size=(800,500))
 plot!(bottom_margin=4mm)
 fig_name_save = "./figure/IRF_s_ck.pdf"
 savefig(fig_name_save)
+"""

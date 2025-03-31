@@ -8,8 +8,13 @@ function construct_IRF(xfull,n)
 end
 
 function qfun(P,theta)
-    eval = P["m"].*theta.^(-P["alph"])
+    eval = P["m"].*(1/theta)./(1 + (1/theta).^P["iota"]).^(1-P["iota"]); 
 end
 function ffun(P,theta)
-    eval = P["m"].*theta.^(1-P["alph"])
+    eval = P["m"].*(theta./(1 + theta.^P["iota"]).^(1-P["iota"]))
+end
+
+function ffun_inverse(P, eval)
+    theta = (eval ./ P["m"]) .* (1 + (eval ./ P["m"]).^(P["iota"] - 1))
+    return theta
 end
