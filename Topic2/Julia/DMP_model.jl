@@ -1,6 +1,7 @@
 
 function Jd_def(P, wd,Jd_p1,Jd)
-    eval =  P["z shock"] - wd + P["beta"].*(1-P["s"])*Jd_p1 - Jd
+    #eval =  P["z shock"] - wd + P["beta"].*(1-P["s"])*Jd_p1 - Jd
+    eval =  P["z shock"] - P["w_fix"] + P["beta"].*(1-P["s"])*Jd_p1 - Jd
     return eval;
 end
 Jd_def_inputs = arg_name(Jd_def)
@@ -26,15 +27,15 @@ end
 ud_def_inputs = arg_name(ud_def)
 
 
-allinputs_string = "theta,Jd,wd,ud"
-
+#allinputs_string = "theta,Jd,wd,ud"
+allinputs_string = "theta,Jd,ud"
 
 
 
 varargin = [
     Jd_def,Jd_def_inputs,
     Free_entry_def,Free_entry_def_inputs,
-    wd_def,wd_def_inputs,
+    #wd_def,wd_def_inputs,
     ud_def,ud_def_inputs
     ]
     

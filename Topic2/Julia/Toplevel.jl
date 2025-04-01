@@ -29,7 +29,8 @@ function set_parameters(;
         s = 0.02,
         beta = (0.96).^(1/12),
         b = 0.95,
-        iota = 1.6
+        iota = 1.6,
+        w_fix = 0.95
     )
 
     P = Dict{String,Any}()
@@ -52,6 +53,7 @@ function set_parameters(;
     c = fzero(solvefun, 1.0)  # Provide an initial guess instead of an interval
     P["c"] = c;
     P["xi"] = 0.5;
+    P["w_fix"] = w_fix;
     P["gamma"] = gamma;
     P["s"] = s;
     P["b"] = b;
@@ -86,6 +88,8 @@ for t = 1:T
         Shock_Path[t] = rand() < pi_prob ? z_l : z_h
     end
 end
+
+
 ss0 = 0.1*ones(length(references))
 ss0 = steady_state(ss0,references,P,varargin_eq,"z shock",ones(T))
 ss1 = copy(ss0)
