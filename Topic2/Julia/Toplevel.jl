@@ -12,6 +12,7 @@ using Printf
 using LaTeXStrings
 using Plots.PlotMeasures
 using Roots
+using Interpolations
 
 include("./functions_sub.jl")
 include("./Sequence_Space_Solver.jl")
@@ -27,7 +28,7 @@ function set_parameters(;
         gamma = 0.5,
         s = 0.02,
         beta = (0.96).^(1/12),
-        b = 0.4,
+        b = 0.95,
         iota = 1.6
     )
 
@@ -37,7 +38,11 @@ function set_parameters(;
     P["iota"] = iota;
 
     uss = 0.05;
-    thetass = ffun_inverse(P, (s.*(1-uss))/uss);
+    theta_vals = range(0.25, .5, length=100);
+    f_vals = [ffun(P, theta) for theta in theta_vals];
+    f_inv = LinearInterpolation(f_vals, theta_vals);
+    #lambdau = (s*(1-uss))/uss;
+    thetass = f_inv(0.38);
     
  
     zss =1;
@@ -66,14 +71,20 @@ P = set_parameters()
 
 
 
+T = 500;
 
-
-T = 30;
+pi_prob = 1.97/2;
+z_h = exp(0.01);
+z_l = exp(-0.01);
 
 Shock_Var_in = "z shock"
-Shock_Path = ones(T)
-for t = 2:T
-    Shock_Path[t] = Shock_Path[t] + 0.1
+Shock_Path = ones(T) * z_h
+for t = 1:T
+    if Shock_Path[t] == z_h
+        Shock_Path[t] = rand() < pi_prob ? z_h : z_l
+    elseif Shock_Path[t] == z_l
+        Shock_Path[t] = rand() < pi_prob ? z_l : z_h
+    end
 end
 ss0 = 0.1*ones(length(references))
 ss0 = steady_state(ss0,references,P,varargin_eq,"z shock",ones(T))
@@ -83,23 +94,12 @@ Shock_Var_in,Shock_Path);
 
 d = construct_IRF(xfull,n)
 
-plot(1:T,d["ud"])
+print(std(log.(d["ud"])))
+print(std(log.(d["theta"])))
+print(std(log.(d["theta"].*d["ud"])))
 
 """
-
-Shock_Var_in = "s"
-Shock_Path = P["s"]*exp.(zeros(T))
-Shock_Path[1] =  P["s"] + 0.01
-
-ss0 = steady_state(ss0,references,P,varargin_eq,"z shock",ones(T))
-ss1 = copy(ss0)
-xfull = system_solve(ss0,ss1,references,P,varargin_eq,T,
-Shock_Var_in,Shock_Path);
-d = construct_IRF(xfull,n)
-
-
-
-Tlim = 30;
+Tlim = 200;
 lwset = 4
 plt_u = plot(1:T,d["ud"], lw=lwset)
 plot!(1:T,P["uss"]*ones(T), lw=lwset, color=:grey, linestyle=:dash )
@@ -107,6 +107,19 @@ xlims!((0, Tlim))
 plot!(legend=:false)
 plot!(xlabel="Months")
 plot!(title="Unemployment rate, "*L"u")
+fig_name_save = "/Users/snitkin/Documents/Macro/PSETS/PSET Masao 1/IRF_u.pdf"
+savefig(fig_name_save)
+
+vacancy_rate = d["theta"] .* d["ud"]
+plt_vacancy_rate = plot(1:T, vacancy_rate, lw=lwset)
+plot!(1:T, P["thetass"] * P["uss"] * ones(T), lw=lwset, color=:grey, linestyle=:dash)
+xlims!((0, Tlim))
+plot!(legend=:false)
+plot!(xlabel="Months")
+plot!(title="Vacancy rate, "*L"v")
+fig_name_save = "/Users/snitkin/Documents/Macro/PSETS/PSET Masao 1/IRF_v.pdf"
+savefig(fig_name_save)
+
 
 
 plt_s = plot(1:T,Shock_Path, lw=lwset)
