@@ -1,7 +1,6 @@
 
-function Jd_def(P, wd,Jd_p1,Jd)
-    #eval =  P["z shock"] - wd + P["beta"].*(1-P["s"])*Jd_p1 - Jd
-    eval =  P["z shock"] - P["w_fix"] + P["beta"].*(1-P["s"])*Jd_p1 - Jd
+function Jd_def(P, Jd_p1,Jd)
+    eval =  P["z shock"] - wd + P["beta"].*(1-P["s"])*Jd_p1 - Jd
     return eval;
 end
 Jd_def_inputs = arg_name(Jd_def)
@@ -14,7 +13,7 @@ Free_entry_def_inputs = arg_name(Free_entry_def)
 
 
 function wd_def(P,wd,theta )
-    eval =   (1-P["gamma"]).*P["b"] + P["gamma"].*(P["z shock"] + theta.*P["c"]) -wd
+    eval =   (1-P["gamma"]).*P["b"] + P["gamma"].*(P["z shock"] + theta.*P["c"]) - wd
     return eval;
 end
 wd_def_inputs = arg_name(wd_def)
@@ -27,20 +26,18 @@ end
 ud_def_inputs = arg_name(ud_def)
 
 
-#allinputs_string = "theta,Jd,wd,ud"
-allinputs_string = "theta,Jd,ud"
+allinputs_string = "theta,Jd,wd,ud"
+
 
 
 
 varargin = [
     Jd_def,Jd_def_inputs,
     Free_entry_def,Free_entry_def_inputs,
-    #wd_def,wd_def_inputs,
+    wd_def,wd_def_inputs,
     ud_def,ud_def_inputs
-    ]
+    ]   
     
-
-
 references = process_inputs(allinputs_string,varargin)
 n = length(references)
 
